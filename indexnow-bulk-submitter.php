@@ -4,6 +4,8 @@
  * Plugin URI:        https://github.com/chulingera2025/indexnow-bulk-submitter
  * Description:       批量提交sitemap中的URL到IndexNow，适用于已安装IndexNow插件但需要提交历史文章的场景
  * Version:           1.0.0
+ * Requires at least: 5.0
+ * Requires PHP:      7.2
  * Author:            chulingera2025
  * Author URI:        https://github.com/chulingera2025
  * License:           GPL-2.0+

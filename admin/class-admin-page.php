@@ -126,20 +126,6 @@ class IndexNow_Bulk_Submitter_Admin {
 			wp_send_json_error( array( 'message' => '权限不足' ) );
 		}
 
-		$rate_limit_key = 'indexnow_rate_limit_' . get_current_user_id();
-		$last_request = get_transient( $rate_limit_key );
-
-		if ( false !== $last_request ) {
-			$time_diff = time() - $last_request;
-			if ( $time_diff < 2 ) {
-				wp_send_json_error( array(
-					'message' => '请求过于频繁，请稍后再试'
-				) );
-			}
-		}
-
-		set_transient( $rate_limit_key, time(), 60 );
-
 		$sitemap_url = isset( $_POST['sitemap_url'] ) ? esc_url_raw( $_POST['sitemap_url'] ) : '';
 		$batch_size = isset( $_POST['batch_size'] ) ? intval( $_POST['batch_size'] ) : 100;
 		$batch_index = isset( $_POST['batch_index'] ) ? intval( $_POST['batch_index'] ) : 0;
@@ -162,7 +148,7 @@ class IndexNow_Bulk_Submitter_Admin {
 			wp_send_json_error( array( 'message' => '无效的批次索引' ) );
 		}
 
-		if ( 0 === $batch_index ) {
+		if ( empty( $session_key ) ) {
 			set_time_limit( 300 );
 
 			$parser = new IndexNow_Sitemap_Parser();
@@ -174,6 +160,10 @@ class IndexNow_Bulk_Submitter_Admin {
 			}
 
 			$urls = $parser->get_urls();
+			if ( empty( $urls ) ) {
+				wp_send_json_error( array( 'message' => '未找到可提交的URL' ) );
+			}
+
 			$session_key = 'indexnow_bulk_' . get_current_user_id() . '_' . wp_generate_password( 12, false );
 			set_transient( $session_key, array(
 				'urls' => $urls,
@@ -182,6 +172,7 @@ class IndexNow_Bulk_Submitter_Admin {
 			), 3600 );
 
 			wp_send_json_success( array(
+				'type' => 'parse',
 				'session_key' => $session_key,
 				'total_urls' => count( $urls ),
 				'total_batches' => ceil( count( $urls ) / $batch_size ),
@@ -189,9 +180,19 @@ class IndexNow_Bulk_Submitter_Admin {
 			) );
 		}
 
-		if ( empty( $session_key ) ) {
-			wp_send_json_error( array( 'message' => '缺少会话密钥' ) );
+		$rate_limit_key = 'indexnow_rate_limit_' . get_current_user_id();
+		$last_request = get_transient( $rate_limit_key );
+
+		if ( false !== $last_request ) {
+			$time_diff = time() - $last_request;
+			if ( $time_diff < 1 ) {
+				wp_send_json_error( array(
+					'message' => '请求过于频繁，请稍后再试'
+				) );
+			}
 		}
+
+		set_transient( $rate_limit_key, time(), 60 );
 
 		$session_data = get_transient( $session_key );
 		if ( false === $session_data || ! isset( $session_data['user_id'] ) || $session_data['user_id'] !== get_current_user_id() ) {

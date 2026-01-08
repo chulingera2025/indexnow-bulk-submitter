@@ -84,7 +84,7 @@ jQuery(document).ready(function($) {
 				if (response.success) {
 					if (response.data.completed) {
 						handleCompletion();
-					} else {
+					} else if (typeof response.data.batch_index !== 'undefined') {
 						if (response.data.success) {
 							successCount += response.data.submitted_count;
 							addResult('success', '批次 ' + currentBatch + ': ' + response.data.message);
@@ -97,6 +97,8 @@ jQuery(document).ready(function($) {
 						$('#error-count').text(errorCount);
 
 						submitBatch(sitemapUrl, batchSize, response.data.batch_index);
+					} else {
+						handleError('收到意外的响应格式');
 					}
 				} else {
 					handleError(response.data.message);
