@@ -115,7 +115,7 @@ A: 支持标准的XML sitemap格式，包括：
 
 ## 作者
 
-Your Name
+chulingera2025
 
 ## 许可证
 
